@@ -1,0 +1,333 @@
+from tkinter import *
+import tkinter as tk
+from tkinter import messagebox
+from tkcalendar import Calendar
+from tkinter.ttk import Combobox  # ttk is an extension of tkinter library
+from PIL import ImageTk, Image  # importing ImageTk, a specific widget used in this program so I can include photos
+
+CHILD_DISCOUNT = 0.85
+INFANT_DISCOUNT = 0.8
+tries = 0
+
+accounts_dict = {"r": "t"}  # creating a dictionary to store user accounts in
+passengers = []
+root = Tk()
+root.attributes('-fullscreen', True)
+root.title("Flight booker")
+
+# creating a class for the flights
+class Flights:
+    def __init__(self, departure, destination, date, type, price):
+        self.departure = departure
+        self.destination = destination
+        self.date = date
+        self.type = type
+        self.price = price
+
+    # calculating the final cost of regular tickets 
+    def calc_cost(self):
+        return self.price
+
+    def display_details(self):
+        return f"{self.type} class ticket from {self.departure} to {self.destination} on {self.date} at ${self.price}"
+
+ # creating a sub class for children 
+class Child(Flights):
+    def __init__(self, departure, destination, date, type, price, discount=CHILD_DISCOUNT):
+        super().__init__(departure, destination, date, type, price)
+        self.discount = discount
+
+    # applying the discount for child tickets
+    def calc_cost(self):
+        return super().calc_cost() * self.discount
+
+ # creating a sub class for infants
+class Infant(Flights):
+    def __init__(self, departure, destination, date, type, price, discount=INFANT_DISCOUNT):
+        super().__init__(departure, destination, date, type, price)
+        self.discount = discount
+
+    # appling the discount to infant tickets
+    def calc_cost(self):
+        return super().calc_cost() * self.discount
+
+# creating the start screen
+def start_screen():
+    global frame0, bg
+    frame0 = Frame(root)
+    frame0.pack(fill=BOTH, expand=True)
+
+    # getting dimensions of the user's screen
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+
+    # opening the globe image and resizing it to fit the user's screen
+    image = Image.open("globe_image.png")
+    image = image.resize((screen_width, screen_height), Image.LANCZOS)  # LANCZOS maintains the image's quality
+    bg = ImageTk.PhotoImage(image)
+
+    label1 = Label(frame0, image=bg)
+    label1.place(x=0, y=0)
+
+    program_label = Label(frame0, text="FLIGHT BOOKER", font=("Arial bold", 40), bg="light blue", justify="center")
+    program_label.grid(row=0, column=0, padx=50, pady=50)
+
+    # creating a log in button
+    log_in_button = Button(frame0, text="LOG IN", height=3, width=25, font=("Arial bold", 20), bg="light green", command=log_in)
+    log_in_button.grid(row=1, column=0, pady=5)
+
+    # creating a create account button
+    create_account_button = Button(frame0, text="CREATE ACCOUNT", height=3, width=25, font=("Arial bold", 20), bg="light green", command=create_account)
+    create_account_button.grid(row=2, column=0, pady=15)
+
+    # creating an exit button
+    exit_button = Button(frame0, text="EXIT", height=3, width=25, font=("Arial bold", 20), bg="red", justify="center", command=exit)
+    exit_button.grid(row=3, column=0, pady=15)
+
+
+# creating another frame for users to log into the program
+def log_in():
+    global log_in_frame  # making the frame global so that it can be accessed within other functions
+    frame0.pack_forget()  # forgetting the previous frame and all the widgets in it
+
+    log_in_frame = Frame(root)
+    log_in_frame.pack(fill=BOTH, expand=True)
+
+    label2 = Label(log_in_frame, image=bg)
+    label2.place(x=0, y=0)
+
+    username_title = Label(log_in_frame, text="Enter your username: ", font=("Arial Bold", 35), bg="light blue")
+    username_title.grid(row=1, column=0, pady=40, padx=20)
+
+    global username
+    username = Entry(log_in_frame, font=('Arial', 24))
+    username.grid(row=1, column=1, pady=10)
+
+    password_title = Label(log_in_frame, text="Enter your password: ", font=("Arial Bold", 35), bg="light blue")
+    password_title.grid(row=2, column=0, pady=20, padx=20)
+
+    global password
+    password = Entry(log_in_frame, show="*", font=('Arial', 24))  # using this show feature so users cannot see the password they enter in order to make it more secure
+    password.grid(row=2, column=1, pady=10)
+
+    submit_user_btn = Button(log_in_frame, text="SUBMIT", font=('Arial bold', 25), bg="light green", command=check_account)
+    submit_user_btn.grid(row=3, column=0, pady=10, padx=10)
+
+# function to check the details the user has entered
+def check_account():
+    global tries
+    max_attempts = 3
+    if tries < max_attempts:
+        get_username = username.get()  # retrieving the user's username input
+        if get_username in accounts_dict:  # if the username the user entered is in the dictionary...
+            index = list(accounts_dict).index(get_username)  # find the index of the user's inputted username
+            value1 = list(accounts_dict.values())[index]  # find the value of that index^
+
+            get_password = password.get()  # retrieving the password the user has entered
+            if value1 == get_password:  
+                messagebox.showinfo("Success!", "Sign-in successful. Welcome to the flight booking application!")
+                log_in_frame.destroy()  # remove frame 1
+                main_menu()  # go to the menu function
+
+            else:
+                messagebox.showinfo("Error", "Incorrect details, please try again.")
+                tries += 1
+                
+        else:
+            # if the user entered incorrect details
+            messagebox.showinfo("Error", "Incorrect details, please try again.")
+            tries += 1
+    
+    else:
+        messagebox.showinfo("Error!", "Too many log in attempts. Please come back next time.")
+        exit()
+
+
+def create_account():
+    frame0.pack_forget()  # forgetting the previous frame and all the widgets in it
+    global create_account_frame
+
+    create_account_frame = Frame(root)
+    create_account_frame.pack(fill=BOTH, expand=True)
+
+    label3 = Label(create_account_frame, image=bg)
+    label3.place(x=0, y=0)
+
+    account_label = Label(create_account_frame, text="Enter your new username: ", font=("Arial Bold", 35), bg="light blue")
+    account_label.grid(row=0, column=0, pady=40, padx=20)
+
+    account = Entry(create_account_frame, font=('Arial bold', 25))
+    account.grid(row=0, column=1, pady=10)
+
+    password_label = Label(create_account_frame, text="Enter your new password: ", font=("Arial Bold", 35), bg="light blue")
+    password_label.grid(row=1, column=0, pady=10, padx=20)
+
+    password = Entry(create_account_frame, font=('Arial bold', 25))
+    password.grid(row=1, column=1, pady=10)
+
+    password_restrictions = Label(create_account_frame, text="Passwords must be at least 5 characters.", font=("Arial", 10), bg="light blue")
+    password_restrictions.grid(row=2, column=0, padx=20)
+
+    # creating a button to submit the user's input
+    global enter_button
+    enter_button = Button(create_account_frame, text="SUBMIT", font=('Arial bold', 25), bg="light green", command=lambda: add_new_account(account.get(), password.get()))
+    enter_button.grid(row=3, column=0, pady=10, padx=10)
+
+
+# this function adds the user's account and password to the accounts dictionary
+def add_new_account(account, password):
+    if len(password) < 4:
+        messagebox.showinfo("Error", "Password is too short! Please try again!")
+
+    elif account in accounts_dict:
+            messagebox.showerror("Error!", "This username has already been used. Please select a new one.")
+  
+    else:
+            accounts_dict[account] = password
+            enter_button.destroy()
+            messagebox.showinfo("Success!", "New account added.")
+            create_account_frame.destroy()
+            start_screen()
+
+
+# creating a frame for the booking flights menu
+def main_menu():
+    global menu_frame
+    menu_frame = Frame(root)
+    menu_frame.pack(fill=BOTH, expand=True)
+
+    label4 = Label(menu_frame, image=bg)
+    label4.place(x=0, y=0)
+
+    menu_label = Label(menu_frame, text="MENU", font=("Arial bold", 40), bg="light blue", justify="center")
+    menu_label.grid(row=0, column=0, padx=50, pady=50)
+
+    # creating a book flight button
+    book_button = Button(menu_frame, text="BOOK A FLIGHT", height=3, width=25, font=("Arial bold", 20), bg="light green", command=book_flight)
+    book_button.grid(row=1, column=0, pady=5, padx=40)
+
+    # creating an exit button
+    exit_button = Button(menu_frame, text="EXIT", height=3, width=25, font=("Arial bold", 20), bg="red", justify="center", command=exit)
+    exit_button.grid(row=2, column=0, pady=5)
+
+
+# creating a frame for the booking flights menu
+def book_flight():
+    global book_frame, departure_combo, destination_combo, type_combo, adult_spinbox, child_spinbox, infant_spinbox, price_entry, cal
+    menu_frame.pack_forget()
+
+    book_frame = Frame(root)
+    book_frame.pack(fill=BOTH, expand=True)
+
+    label5 = Label(book_frame, image=bg)
+    label5.place(x=0, y=0)
+
+    departure_label = Label(book_frame, text="Enter departure location: ", font=("Arial bold", 20), bg="light blue")
+    departure_label.grid(row=0, column=0, pady=10, padx=20)
+
+     # creating a combo box for users to select their departure location
+    departure_combo = Combobox(book_frame, state = "readonly", font = ("Arial", 15))
+    departure_combo.grid(column = 1, row = 0)
+    departure_combo["values"] = ("Auckland, New Zealand", "Wellington, New Zealand", "Hamilton, New Zealand", "Christchurch, New Zealand", "Sydney, Australia", "Melbourne, Australia", "Canberra, Australia", "Brisbane, Australia", "Adelaide, Australia", "Nadi, Fiji", "Bangkok, Thailand", "Narita, Japan", "Hiroshima, Japan") #adding combo items using tuple
+    departure_combo.current(0) #setting selected item
+
+    destination_label = Label(book_frame, text="Enter destination: ", font=("Arial bold", 20), bg="light blue")
+    destination_label.grid(row=1, column=0, pady=10, padx=20)
+    # creating a combo box for users to select their departure location
+    destination_combo = Combobox(book_frame, state = "readonly", font = ("Arial", 15))
+    destination_combo.grid(column = 1, row = 1)
+    destination_combo["values"] = ("Auckland, New Zealand", "Wellington, New Zealand", "Hamilton, New Zealand", "Christchurch, New Zealand", "Sydney, Australia", "Melbourne, Australia", "Canberra, Australia", "Brisbane, Australia", "Adelaide, Australia", "Nadi, Fiji", "Bangkok, Thailand", "Narita, Japan", "Hiroshima, Japan") #adding combo items using tuple
+    destination_combo.current(0) #setting selected 
+
+    date_label = Label(book_frame, text="Choose date: ", font=("Arial bold", 20), bg="light blue")
+    date_label.grid(row=2, column=0, pady=10, padx=20)
+
+    # adding a calendar using the built-in python module
+    cal = Calendar(book_frame, selectmode="day", date_pattern="dd/mm/yyyy")
+    cal.grid(row=2, column=1, pady=10)
+
+    flight_class_label = Label(book_frame, text="Choose class: ", font=("Arial bold", 20), bg="light blue")
+    flight_class_label.grid(row=3, column=0, pady=10, padx=20)
+
+    # creating a combo box for users to select their departure location
+    type_combo = Combobox(book_frame, state = "readonly", font = ("Arial", 15))
+    type_combo.grid(row = 3, column = 1)
+    type_combo["values"] = ("First class", "Business Class", "Economy Class") #adding combo items using tuple
+    type_combo.current(0) #setting selected 
+
+    adult_count_label = Label(book_frame, text="Number of adults: ", font=("Arial bold", 20), bg="light blue")
+    adult_count_label.grid(row=4, column=0, pady=10, padx=20)
+    adult_spinbox = Spinbox(book_frame, from_ = 0, to = 10, width = 5, state = "readonly", font = ("Arial bold", 20))
+    adult_spinbox.grid(row = 4, column = 1, padx = 10)
+
+    child_count_label = Label(book_frame, text="Number of children: ", font=("Arial bold", 20), bg="light blue")
+    child_count_label.grid(row=5, column=0, pady=10, padx=20)
+    child_spinbox = Spinbox(book_frame, from_ = 0, to = 10, width = 5, state = "readonly", font = ("Arial bold", 20))
+    child_spinbox.grid(row = 5, column = 1, padx = 10)
+
+    infant_count_label = Label(book_frame, text="Number of infants: ", font=("Arial bold", 20), bg="light blue")
+    infant_count_label.grid(row=6, column=0, pady=10, padx=20)
+    infant_spinbox = Spinbox(book_frame, from_ = 0, to = 10, width = 5, state = "readonly", font = ("Arial bold", 20))
+    infant_spinbox.grid(row = 6, column = 1, padx = 10)
+
+    price_label = Label(book_frame, text = "enter price of flight: $", font = ("Arial bold", 20), bg = "light blue", justify = "center")
+    price_label.grid(row = 7, column = 0, padx = 50)
+
+    price_entry = Entry(book_frame, font = ('Arial bold', 15))
+    price_entry.grid(row = 7, column = 1, pady = 10)
+
+    submit_button = Button(book_frame, text="SUBMIT", height=2, width=20, font=("Arial bold", 20), bg="light green", command=process_booking)
+    submit_button.grid(row=8, column=1, pady=20, padx=10)
+
+    back_button = Button(book_frame, text="BACK", height=2, width=20, font=("Arial bold", 20), bg="red", command=lambda: return_to_menu(book_frame))
+    back_button.grid(row=8, column=0, pady=20, padx=10)
+
+def process_booking():
+    departure = departure_combo.get()
+    destination = destination_combo.get()
+    date = cal.get_date()
+    flight_class = type_combo.get()
+    num_adults = int(adult_spinbox.get())
+    num_children = int(child_spinbox.get())
+    num_infants = int(infant_spinbox.get())
+
+    # check if there are any passengers
+    if num_adults + num_children + num_infants == 0:
+        messagebox.showinfo("Error!", "There must be at least one passenger (adult, child, or infant).")
+        return
+    
+    try:
+        base_price = float(price_entry.get().strip().lower())
+
+    except ValueError:
+        messagebox.showinfo("Error!","Please enter a valid number for price.")
+        return
+
+    adult_cost = num_adults * base_price
+    child_cost_total = num_children * base_price * CHILD_DISCOUNT
+    infant_cost_total = num_infants * base_price * INFANT_DISCOUNT
+    total_cost = adult_cost + child_cost_total + infant_cost_total
+
+     # creating an invoice message
+    invoice_details = f"----- Invoice -----\nDeparture: {departure}\nDestination: {destination}\nDate: {date}\nClass: {flight_class}\n\n"
+    if num_adults > 0:
+            invoice_details += f"Adult Ticket(s): ${adult_cost:.2f} ({num_adults} @ ${base_price:.2f} each)\n"
+    if num_children > 0:
+        invoice_details += f"Child Ticket(s): ${child_cost_total:.2f} ({num_children} @ ${base_price * CHILD_DISCOUNT:.2f} each)\n"
+    if num_infants > 0:
+        invoice_details += f"Infant Ticket(s): ${infant_cost_total:.2f} ({num_infants} @ ${base_price * INFANT_DISCOUNT:.2f} each)\n"
+    invoice_details += f"\nTotal Cost: ${total_cost:.2f}\n"
+    invoice_details += f"-------------------"
+
+    messagebox.showinfo("Booking Invoice", invoice_details)
+    messagebox.showinfo("Thank you!", "Your flight has been booked.")
+    return_to_menu(book_frame)
+
+
+def return_to_menu(current_frame):
+    current_frame.pack_forget()
+    main_menu()
+
+
+start_screen()
+root.mainloop()
