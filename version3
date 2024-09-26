@@ -14,7 +14,7 @@ root = Tk()
 root.attributes('-fullscreen', True)
 root.title("Flight booker")
 
-# Keep a reference to the images
+# keep a reference to the images
 image_references = {}
 
 # creating a class for the flights
@@ -29,9 +29,6 @@ class Flights:
     # calculating the final cost of regular tickets 
     def calc_cost(self):
         return self.price
-
-    def display_details(self):
-        return f"{self.type} class ticket from {self.departure} to {self.destination} on {self.date} at ${self.price}"
 
  # creating a sub class for children 
 class Child(Flights):
@@ -64,7 +61,7 @@ def welcome_screen():
     screen_height = root.winfo_screenheight()
 
     # opening the globe image and resizing it to fit the user's screen
-    image = Image.open("resized_background.png")
+    image = Image.open("images/resized_background.png")
     image = image.resize((screen_width, screen_height), Image.LANCZOS)  # LANCZOS maintains the image's quality
     bg = ImageTk.PhotoImage(image)
 
@@ -81,7 +78,7 @@ def welcome_screen():
     program_label2.grid(row=2, column=0, pady=(10,0), padx = 60)
 
     # getting the plane image
-    plane_img = PhotoImage(file='plane.png')
+    plane_img = PhotoImage(file='images/plane.png')
     image_references['plane_img'] = plane_img  # keeping a reference to the image
 
     # making the button
@@ -341,9 +338,7 @@ def view_flights():
         flights_text.insert(END, flight_logs)
         flights_text.config(state=DISABLED)
 
-
 def process_booking():
-
     departure = departure_combo.get()
     destination = destination_combo.get()
     date = cal.get_date()
@@ -366,29 +361,49 @@ def process_booking():
     
     elif flight_class == "Economy Class":
         base_price = 3000
-    
-     # calculating the price of each ticket and the total price of the purchase, after appropriate discounts have been applied
-    adult_cost = num_adults * base_price
-    child_cost_total = num_children * base_price * CHILD_DISCOUNT
-    infant_cost_total = num_infants * base_price * INFANT_DISCOUNT
-    gst = (infant_cost_total + adult_cost + child_cost_total) * 0.15
-    total_cost = adult_cost + child_cost_total + infant_cost_total + gst
+
+    passengers = []
+
+    # adding adult tickets to the flight class
+    for _ in range(num_adults):
+        passengers.append(Flights(departure, destination, date, flight_class, base_price))
+
+    # adding child tickets to the child class
+    for _ in range(num_children):
+        passengers.append(Child(departure, destination, date, flight_class, base_price))
+
+    # adding infant tickets to the infant class
+    for _ in range(num_infants):
+        passengers.append(Infant(departure, destination, date, flight_class, base_price))
+        
+    # calculating the total cost of all passengers, including gst
+    total_cost = sum([flight.calc_cost() for flight in passengers])
+    gst = total_cost * 0.15
+    total_cost_incl_gst = total_cost + gst
 
     # creating an invoice message
     invoice_details = f"----- Invoice -----\nDeparture: {departure}\nDestination: {destination}\nDate: {date}\nClass: {flight_class}\n"
+    
     if 'return_calendar' in globals(): # this finds out whether the user has booked a return flight, or not by finding out whether the return calendar is a global variable
         return_date = return_calendar.get_date()
         invoice_details += f"Return date: {return_date}\n\n"
     else:
         next
+    # checking the amount of passengers, and adding their information to the invoice
 
     if num_adults > 0:
+            adult_cost = sum([flight.calc_cost() for flight in passengers if isinstance(flight, Flights) and not isinstance(flight, (Child, Infant))]) #if passengers is part of the flights class
             invoice_details += f"Adult Ticket(s): ${adult_cost:.2f} ({num_adults} @ ${base_price:.2f} each)\n"
+
     if num_children > 0:
-        invoice_details += f"Child Ticket(s): ${child_cost_total:.2f} ({num_children} @ ${base_price * CHILD_DISCOUNT:.2f} each)\n"
+        child_cost = sum([flight.calc_cost() for flight in passengers if isinstance(flight, Child)]) #if passengers is part of the child class
+        invoice_details += f"Child Ticket(s): ${child_cost:.2f} ({num_children} @ ${base_price * CHILD_DISCOUNT:.2f} each)\n"
+
     if num_infants > 0:
-        invoice_details += f"Infant Ticket(s): ${infant_cost_total:.2f} ({num_infants} @ ${base_price * INFANT_DISCOUNT:.2f} each)\n"
-    invoice_details += f"\nTotal Cost: ${total_cost:.2f}, incl ${gst} GST\n"
+        infant_cost = sum([flight.calc_cost() for flight in passengers if isinstance(flight, Infant)]) #if passenger is part of the infant class
+        invoice_details += f"Infant Ticket(s): ${infant_cost:.2f} ({num_infants} @ ${base_price * INFANT_DISCOUNT:.2f} each)\n"
+    
+    invoice_details += f"\nTotal Cost: ${total_cost_incl_gst:.2f}, incl ${gst} GST\n"
     invoice_details += f"-------------------"
 
     messagebox.showinfo("Booking Invoice", invoice_details)
