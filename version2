@@ -28,9 +28,6 @@ class Flights:
     def calc_cost(self):
         return self.price
 
-    def display_details(self):
-        return f"{self.type} class ticket from {self.departure} to {self.destination} on {self.date} at ${self.price}"
-
  # creating a sub class for children 
 class Child(Flights):
     def __init__(self, departure, destination, date, type, price, discount=CHILD_DISCOUNT):
@@ -62,7 +59,7 @@ def start_screen():
     screen_height = root.winfo_screenheight()
 
     # opening the globe image and resizing it to fit the user's screen
-    image = Image.open("globe_image.png")
+    image = Image.open("images/globe_image.png")
     image = image.resize((screen_width, screen_height), Image.LANCZOS)  # LANCZOS maintains the image's quality
     bg = ImageTk.PhotoImage(image)
 
