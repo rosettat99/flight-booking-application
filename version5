@@ -55,6 +55,7 @@ class Infant(Flights):
 
 # creating the start screen
 def welcome_screen():
+    open("flight_log.txt", 'w').close() # clearing the txt file, so it does not show any other users information
     global welcome_frame, bg
     welcome_frame = Frame(root)
     welcome_frame.pack(fill=BOTH, expand=True)
